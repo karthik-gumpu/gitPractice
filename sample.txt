@@ -1,2 +1,8 @@
+<<<<<<< HEAD
+this is sample txt
+this is changed txt
+changed text
+hellooot
+=======
 
  ----------s,rmkfkfe-------

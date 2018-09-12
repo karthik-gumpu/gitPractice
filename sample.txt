@@ -1,7 +1,4 @@
 this is sample txt
 
-<<<<<<< HEAD
 changed text
-=======
 hellooo
->>>>>>> 998c213688a464d250d2478603dbda3cd19a69be

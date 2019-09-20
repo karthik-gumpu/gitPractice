@@ -23,9 +23,9 @@ import { WSASYSCALLFAILURE } from "constants";
 
 // expandedWallets: {
 //     wallet_id: {
-//         card: {
-//             accountNumber: "full length account number"
-//         }
+//
+//             cardNumber: "full length account number"
+//
 //     }
 // }
 class ViewWallet extends React.Component {
@@ -111,7 +111,8 @@ class ViewWallet extends React.Component {
       ...this.state.expandedWallets,
       [walletId]: {
         ...this.state.expandedWallets[walletId],
-        cardNum: this.generateFullCardNumber(cardNumSuffix)
+
+        cardNumber: this.generateFullCardNumber(cardNumSuffix)
       }
     };
     this.setState({ expandedWallets });
@@ -210,11 +211,9 @@ class ViewWallet extends React.Component {
                   <Cell className="tablecell">Card</Cell>
                   <Cell className="tablecell">
                     {(() => {
-                      const card =
-                        this.state.expandedWallets[wallet.id] &&
-                        this.state.expandedWallets[wallet.id].card;
+                      const card = this.state.expandedWallets[wallet.id];
                       if (card) {
-                        return card.cardNum;
+                        return card.cardNumber;
                       }
                       return wallet.cardNum;
                     })()}

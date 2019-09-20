@@ -1,0 +1,194 @@
+import React from 'react';
+import Button, {SecondaryButton} from '@vzrf/react-button';
+import Form, {FormGroup, Input, Select, Label, Textarea, Checkbox } from "@vzrf/react-forms";
+import "./../back-office/ViewWallet.css";
+import Bar, {SecondaryBar, TertiaryBar} from '@vzrf/react-bar';
+import { Grid, Row, Col } from "@vzrf/react-grid";
+import Table, { TableHead, TableHeader, TableBody, TableRow, Cell } from '@vzrf/react-table';
+import { managewallet } from '../../utils/WalletService';
+import { WSASYSCALLFAILURE } from 'constants';
+
+class ViewWallet extends React.Component {
+    constructor(props){
+        super(props);
+        this.state={
+            accountNumber: '',
+            walletAccounts: [],
+            currency: '',
+            expandedWallets: {}
+        }
+    }
+
+    handleChange = (e) =>{
+        e.persist();
+        this.setState({
+            [e.target.id]: e.target.value
+        })
+    }
+
+    handleReset = (e) => {
+        this.setState({
+            accountNumber: ''
+        })
+    }
+
+    
+
+
+    onSubmit = () => {
+        const options = {
+            url: "https://viewwalletentws-sit2.cfappstpanp.ebiz.verizon.com/domestic/viewwallet",
+			data: {
+				serviceHeader: {
+					serviceName: "ManageWalletEnt",
+					serviceAction: "viewWallet",
+				  },
+				  serviceBody: {
+					customerDetails: {
+                        // "contractAcctNum": "1212400009961",3598737570001
+                        // "businessPartnerNum": "1212400009961"
+					//   businessPartnerNum:"1212400009961",
+					//   lineOfBusiness: "B",
+					  contractAcctNum: this.state.accountNumber,
+					},
+					transactionSourceDetails: {
+					  callingEntity: "CFORIA",
+					},
+					paymentDetails: {
+						pmtAccountRefID: this.props.accountRefId
+					}
+					
+				}
+			}
+	   };
+	   managewallet(options)
+	   .then((response) => {
+		console.log("get wallet",  response,typeof response.data.serviceResponseHeader.responseCode);
+		if(response.data.serviceResponseHeader.responseCode === '9950'){
+            console.log(this.state,'wallet get after if ddd',response.data.serviceResponseBody.responseDetails.walletAccounts)
+            const walletAccounts =  response.data.serviceResponseBody.responseDetails.walletAccounts
+			this.setState({
+                walletAccounts,
+                currency: walletAccounts.length ? walletAccounts[0].currency : null
+            });
+            
+		}
+	   })
+    }
+
+
+    render() {
+        return(
+            <div>
+                <div>
+                    <h1>View Wallet</h1>
+                </div>
+                {/* <div> */}
+                <Grid>
+                    <Row>
+                        <Col span={{xl:3}}>
+                        <FormGroup>
+                            <Label className="label"><strong>Contract Account Number:</strong></Label>
+                            <Input type="text" className="input" id="accountNumber" value={this.state.accountNumber} onChange={this.handleChange}/>
+                        </FormGroup>
+                    </Col>
+                    <Col span={{xl:4}}>
+                        <Button type="submit" className="button" onClick={this.onSubmit}>Submit</Button>
+                        <Button type="submit" className="button" onClick={this.handleReset}>Reset</Button>
+                    </Col>
+                    </Row>
+                </Grid>
+                    <Bar className="barhead"><strong>Payment Accounts</strong></Bar>
+                {/* </div> */}
+                <div>
+                    <Table>
+                        <TableHead className="header">
+                            <TableHeader className="tableheader" >Payment Account</TableHeader>
+                            <TableHeader className="tableheader" >Card Number</TableHeader>
+                            <TableHeader className="tableheader" >Expiration Date</TableHeader>
+                            {
+                                (() => {
+                                    if(this.state.currency == "EUR") {
+                                        return (
+                                            <>
+                                                <TableHeader className="tableheader" >Swift Code</TableHeader>
+                                                <TableHeader className="tableheader" >IBan number</TableHeader>
+                                            </>
+                                        )
+                                    }
+                                    if(this.state.currency == "GBP") {
+                                        return (
+                                            <>
+                                                <TableHeader className="tableheader" >Sort Code</TableHeader>
+                                                <TableHeader className="tableheader" >Bank Account number</TableHeader>
+                                            </>
+                                        )
+                                    }
+                                    return (
+                                        <>
+                                            <TableHeader className="tableheader" >Routing Number</TableHeader>
+                                            <TableHeader className="tableheader" >Bank Account Number</TableHeader>
+                                        </>
+                                    )
+                                })()
+                            }
+                            <TableHeader className="tableheader" >Recurring payment</TableHeader>
+                        </TableHead>
+                        <TableBody striped>
+                            {this.state.walletAccounts.map((wallet, index) => (
+                            <TableRow key={index}>
+                                <Cell className="tablecell">Card</Cell>
+                                <Cell className="tablecell">
+                                {
+                                    (()=>{
+                                        const card = this.state.expandedWallets[wallet.id] && this.state.expandedWallets[wallet.id].card
+                                        if(card){
+                                            return card.accountNumber
+                                        }
+                                        return wallet.cardNum;
+                                    })()
+                                    
+                                }
+                                <button onClick={()=> this.getFullCardInfo(wallet.id)}> show </button>
+                                </Cell>
+                                <Cell className="tablecell">{wallet.expirationDt}</Cell>
+            
+                                {
+                                    (() =>{
+                                        if(this.state.currency == "EUR") {
+                                            return (
+                                                <>
+                                                    <Cell className="tablecell">{wallet.swiftCode}</Cell>
+                                                    <Cell className="tablecell">{wallet.ibanBBAN}</Cell>
+                                                </>
+                                            )
+                                        }
+                                        if(this.state.currency == "GBP") {
+                                            return (
+                                                <>
+                                                    <Cell className="tablecell">{wallet.sortCode}</Cell>
+                                                    <Cell className="tablecell">{wallet.bankAccountNum}</Cell>
+                                                </>
+                                            )
+                                        }
+                                        return (
+                                            <>
+                                               <Cell className="tablecell">{wallet.bankRoutingNum}</Cell>
+                                                <Cell className="tablecell">{wallet.bankAccountNum}</Cell>
+                                            </>
+                                        )
+                                    })()
+                                }
+                                <Cell className="tablecell">{wallet.isAutopay}</Cell>
+                            </TableRow>
+                            ))
+                        }
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+        )
+    }
+}
+
+export default ViewWallet
